@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Arizona Safest Cities Map</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
+<style>
+:root{--bg:#f7f6f2;--surface:#fbfbf9;--text:#28251d;--muted:#6e6a63;--primary:#01696f;--border:#d4d1ca;--radius:18px;--shadow:0 12px 32px rgba(40,37,29,.12)}
+*{box-sizing:border-box} body{margin:0;font-family:Inter,system-ui,sans-serif;background:var(--bg);color:var(--text)}
+.wrap{max-width:1100px;margin:0 auto;padding:24px}
+.hero{display:grid;gap:16px;margin-bottom:20px}.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow)}
+.header{padding:24px}.eyebrow{letter-spacing:.12em;text-transform:uppercase;font-size:12px;color:var(--primary);font-weight:700}.header h1{font-family:'Playfair Display',serif;font-size:clamp(32px,5vw,56px);line-height:1.02;margin:8px 0 12px}.header p{color:var(--muted);max-width:70ch}
+.layout{display:grid;grid-template-columns:330px 1fr;gap:16px}.list{padding:12px}.city{padding:14px 14px;border-radius:14px;border:1px solid transparent;cursor:pointer}.city:hover,.city.active{background:#eef5f4;border-color:#bfd5d2}.city strong{display:block}.meta{font-size:13px;color:var(--muted);margin-top:4px}
+#map{height:620px;border-radius:var(--radius)} .foot{padding:14px 18px;color:var(--muted);font-size:13px}
+@media (max-width: 860px){.layout{grid-template-columns:1fr}#map{height:440px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <section class="hero card">
+    <div class="header">
+      <div class="eyebrow">Arizona real estate snapshot</div>
+      <h1>Where safety meets Arizona living</h1>
+      <p>SafeWise ranked San Luis, Surprise, Oro Valley, Queen Creek, Sahuarita, Buckeye, Gilbert, Marana, Prescott Valley, and Maricopa as Arizona’s 10 safest cities for 2026. Tap a city to explore the map and see why these communities stand out.</p>
+    </div>
+  </section>
+  <section class="layout">
+    <div class="card list" id="list"></div>
+    <div class="card"><div id="map"></div><div class="foot">Source: SafeWise Arizona’s Safest Cities of 2026.</div></div>
+  </section>
+</div>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+<script>
+const cities = [
+  {rank:1,name:'San Luis',coords:[32.486,-114.782],pop:'38,809',vc:'0.9',pc:'5.6',blurb:'A standout border community and the #1 safest city in Arizona for 2026.'},
+  {rank:2,name:'Surprise',coords:[33.629,-112.368],pop:'163,202',vc:'1.0',pc:'8.9',blurb:'A fast-growing West Valley city with big-city convenience and strong safety appeal.'},
+  {rank:3,name:'Oro Valley',coords:[32.390,-110.967],pop:'48,680',vc:'0.5',pc:'11.5',blurb:'A polished Tucson-area community known for low violent crime and scenic foothill living.'},
+  {rank:4,name:'Queen Creek',coords:[33.248,-111.634],pop:'82,639',vc:'1.2',pc:'8.3',blurb:'One of metro Phoenix’s most in-demand growth stories, with falling property crime.'},
+  {rank:5,name:'Sahuarita',coords:[31.957,-110.955],pop:'37,049',vc:'0.9',pc:'10.3',blurb:'A family-friendly Southern Arizona option with a calm residential feel.'},
+  {rank:6,name:'Buckeye',coords:[33.370,-112.583],pop:'114,513',vc:'1.6',pc:'7.8',blurb:'A booming West Valley market where both violent and property crime moved down year over year.'},
+  {rank:7,name:'Gilbert',coords:[33.352,-111.789],pop:'277,527',vc:'1.3',pc:'7.8',blurb:'A major East Valley destination proving large communities can still deliver impressive safety numbers.'},
+  {rank:8,name:'Marana',coords:[32.437,-111.225],pop:'60,507',vc:'1.2',pc:'13.5',blurb:'A growing Northwest Tucson community with improving property crime trends.'},
+  {rank:9,name:'Prescott Valley',coords:[34.610,-112.315],pop:'51,116',vc:'2.2',pc:'8.1',blurb:'A high-country favorite with room to breathe and lower crime than many buyers expect.'},
+  {rank:10,name:'Maricopa',coords:[33.058,-112.047],pop:'75,614',vc:'2.3',pc:'9.2',blurb:'A popular alternative to core Phoenix living, with violent crime down year over year.'}
+];
+const map = L.map('map').setView([33.6,-111.8], 6);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom: 18, attribution: '&copy; OpenStreetMap'}).addTo(map);
+const list = document.getElementById('list');
+const markers = [];
+function selectCity(i){
+  document.querySelectorAll('.city').forEach((el,idx)=>el.classList.toggle('active', idx===i));
+  const c = cities[i];
+  map.flyTo(c.coords, c.rank < 3 ? 7 : 8, {duration:1.1});
+  markers.forEach((m,idx)=>{ if(idx===i){ m.openPopup(); }});
+}
+cities.forEach((c,i)=>{
+  const marker = L.marker(c.coords).addTo(map).bindPopup(`<strong>#${c.rank} ${c.name}</strong><br>Population: ${c.pop}<br>Violent crime: ${c.vc} per 1,000<br>Property crime: ${c.pc} per 1,000<br><br>${c.blurb}`);
+  markers.push(marker);
+  const item = document.createElement('button');
+  item.className='city';
+  item.innerHTML=`<strong>#${c.rank} ${c.name}</strong><div class="meta">Population ${c.pop} · VC ${c.vc} · PC ${c.pc}</div>`;
+  item.addEventListener('click',()=>selectCity(i));
+  list.appendChild(item);
+});
+selectCity(0);
+</script>
+</body>
+</html>
